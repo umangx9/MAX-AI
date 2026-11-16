@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAX AI Trading Dashboard</title>
+<style>
+body{margin:0;background:#080d19;color:white;font-family:Arial;padding:18px}
+h1{color:#a78bfa}select,button{padding:13px;margin:7px 0;width:100%;border-radius:9px;border:0;font-size:16px}
+button{background:#16a34a;color:white;font-weight:bold}
+.card{background:#172033;padding:16px;border-radius:12px;margin:12px 0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#a7f3d0}
+small{color:#facc15}
+</style>
+</head>
+<body>
+<h1>MAX AI</h1>
+<p>Live Market Data Dashboard</p>
+<div class="card">
+<label>Market</label>
+<select id="venue">
+<option value="quotex">Quotex OTC</option>
+<option value="forex">Real Forex</option>
+</select>
+<label>Symbol</label>
+<select id="symbol">
+<option>EURUSD_otc</option>
+<option>GBPUSD_otc</option>
+<option>USDJPY_otc</option>
+<option>EURUSD</option>
+<option>GBPUSD</option>
+<option>USDJPY</option>
+</select>
+<button onclick="loadCandles()">Load Candles</button>
+<button onclick="connect()">Connect Live Stream</button>
+<button onclick="disconnect()">Disconnect</button>
+</div>
+<div class="card">
+<h3>Connection Status</h3>
+<p id="status">Not Connected</p>
+<small>Live data requires a valid API plan and server key.</small>
+</div>
+<div class="card">
+<h3>Market Data</h3>
+<pre id="data">Waiting for data...</pre>
+</div>
+<script>
+let source=null;
+const $=id=>document.getElementById(id);
+function params(){
+return new URLSearchParams({
+venue:$('venue').value,
+symbol:$('symbol').value,
+tf:'60',
+limit:'100'
+});
+}
+async function loadCandles(){
+$('status').textContent='Loading candles...';
+try{
+let r=await fetch('/api/candles?'+params());
+let t=await r.text();
+$('data').textContent=t;
+$('status').textContent=r.ok?'Candles received':'API Error: '+r.status;
+}catch(e){$('status').textContent='Connection error: '+e.message;}
+}
+function connect(){
+disconnect();
+let p=params();
+source=new EventSource('/api/stream?venue='+encodeURIComponent(p.get('venue'))+'&symbol='+encodeURIComponent(p.get('symbol')));
+source.onopen=()=> $('status').textContent='Stream Connected';
+source.onmessage=e=>$('data').textContent=e.data;
+source.onerror=()=> $('status').textContent='Stream error / reconnecting';
+}
+function disconnect(){
+if(source){source.close();source=null;}
+$('status').textContent='Disconnected';
+}
+</script>
+</body>
+</html>
