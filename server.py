@@ -1,86 +1,126 @@
 
+
 import os
 import time
 import requests
 
+from datetime import datetime
 from flask import Flask, jsonify, request, send_from_directory
-from dotenv import load_dotenv
-
-load_dotenv()
 
 app = Flask(__name__)
 
-API_KEY = (
-    os.getenv("OTCHARTS_API_KEY")
-    or os.getenv("API_KEY")
-    or ""
-).strip()
-
-BASE_URL = "https://otcharts.com"
-
-# API request cache
+BASE_URL = "https://biquote.io/api"
 CACHE = {}
-CACHE_SECONDS = 300
+CACHE_SECONDS = 50
 
 
-def api_headers():
-    if not API_KEY:
-        raise RuntimeError("OTCharts API key is missing")
+def normalize_symbol(symbol):
+    symbol = symbol.upper().replace("_OTC", "").replace("/", "")
+    if len(symbol) != 6 or not symbol.isalpha():
+        raise ValueError("Use a valid Forex pair, e.g. EURUSD")
+    return symbol
 
-    return {
-        "Authorization": f"Bearer {API_KEY}"
+
+def normalize_interval(tf):
+    mapping = {
+        "60": "1m",
+        "1": "1m",
+        "1m": "1m",
+        "300": "5m",
+        "5m": "5m",
+        "900": "15m",
+        "15m": "15m",
+        "3600": "1h",
+        "1h": "1h"
     }
+    return mapping.get(str(tf), "1m")
 
 
-def get_candles(params):
-    cache_key = str(sorted(params.items()))
+def fetch_candles(symbol="EURUSD", interval="1m", limit=100):
+    symbol = normalize_symbol(symbol)
+    interval = normalize_interval(interval)
+    limit = max(35, min(int(limit), 100))
+
+    key = f"{symbol}:{interval}:{limit}"
     now = time.time()
 
-    if cache_key in CACHE:
-        saved_time, saved_data = CACHE[cache_key]
-
+    if key in CACHE:
+        saved_time, saved_data = CACHE[key]
         if now - saved_time < CACHE_SECONDS:
             return saved_data, True
 
+    url = f"{BASE_URL}/{symbol}/ohlc"
+
     response = requests.get(
-        BASE_URL + "/v1/candles",
-        params=params,
-        headers=api_headers(),
+        url,
+        params={"interval": interval, "limit": limit},
         timeout=20
     )
-
     response.raise_for_status()
-    data = response.json()
 
-    CACHE[cache_key] = (now, data)
+    result = response.json()
+    bars = result.get("bars", [])
 
+    if not isinstance(bars, list) or not bars:
+        raise ValueError("No candle data returned by provider")
+
+    candles = []
+
+    for bar in bars:
+        try:
+            dt = datetime.fromisoformat(
+                bar["openTime"].replace("Z", "+00:00")
+            )
+
+            candles.append({
+                "time": int(dt.timestamp()),
+                "open": float(bar["open"]),
+                "high": float(bar["high"]),
+                "low": float(bar["low"]),
+                "close": float(bar["close"]),
+                "volume": float(bar.get("tickVolume", 0)),
+                "isOpen": bool(bar.get("isOpen", False))
+            })
+        except (KeyError, TypeError, ValueError):
+            continue
+
+    # Provider returns newest first.
+    # Indicators and charts use oldest first.
+    candles.sort(key=lambda x: x["time"])
+
+    if len(candles) < 35:
+        raise ValueError("Not enough valid candles")
+
+    data = {
+        "symbol": symbol,
+        "interval": interval,
+        "timeframe": 60 if interval == "1m" else None,
+        "candles": candles,
+        "bars": candles,
+        "data": candles,
+        "count": len(candles),
+        "provider": "Biquote",
+        "isOpen": candles[-1]["isOpen"],
+        "otc": False
+    }
+
+    CACHE[key] = (now, data)
     return data, False
 
 
-def extract_candles(data):
-    if isinstance(data, list):
-        return data
-
-    if isinstance(data, dict):
-        for key in ("candles", "data", "results"):
-            if isinstance(data.get(key), list):
-                return data[key]
-
-    return []
-
-
-def ema(values, period):
+def calculate_ema(values, period):
     if len(values) < period:
         return []
 
     multiplier = 2 / (period + 1)
-
-    result = [sum(values[:period]) / period]
+    current = sum(values[:period]) / period
+    result = [current]
 
     for value in values[period:]:
-        result.append(
-            (value - result[-1]) * multiplier + result[-1]
+        current = (
+            (value - current) * multiplier + current
         )
+        result.append(current)
 
     return result
 
@@ -89,18 +129,18 @@ def calculate_rsi(values, period=14):
     if len(values) <= period:
         return None
 
-    gains = []
-    losses = []
+    changes = [
+        values[i] - values[i - 1]
+        for i in range(1, len(values))
+    ]
 
-    for i in range(1, len(values)):
-        change = values[i] - values[i - 1]
-        gains.append(max(change, 0))
-        losses.append(max(-change, 0))
+    gains = [max(x, 0) for x in changes]
+    losses = [max(-x, 0) for x in changes]
 
     avg_gain = sum(gains[:period]) / period
     avg_loss = sum(losses[:period]) / period
 
-    for i in range(period, len(gains)):
+    for i in range(period, len(changes)):
         avg_gain = (
             avg_gain * (period - 1) + gains[i]
         ) / period
@@ -113,77 +153,62 @@ def calculate_rsi(values, period=14):
         return 100.0
 
     rs = avg_gain / avg_loss
-
     return round(100 - (100 / (1 + rs)), 2)
 
 
-def analyze_candles(candles):
-    closes = []
-
-    for candle in candles:
-        try:
-            closes.append(float(candle["close"]))
-        except (KeyError, TypeError, ValueError):
-            continue
+def analyze(candles):
+    closes = [float(c["close"]) for c in candles]
 
     if len(closes) < 35:
         return {
             "signal": "NO TRADE",
             "confidence": 0,
-            "error": "At least 35 valid candles are required"
+            "error": "At least 35 candles are required"
         }
 
     rsi = calculate_rsi(closes)
 
-    fast = ema(closes, 12)
-    slow = ema(closes, 26)
+    ema9 = calculate_ema(closes, 9)
+    ema21 = calculate_ema(closes, 21)
 
-    if not fast or not slow or rsi is None:
-        return {
-            "signal": "NO TRADE",
-            "confidence": 0,
-            "error": "Not enough indicator data"
-        }
+    ema12 = calculate_ema(closes, 12)
+    ema26 = calculate_ema(closes, 26)
 
-    macd = fast[-1] - slow[-1]
-    signal_line_values = [
-        fast[i + 26 - 12] - slow[i]
-        for i in range(len(slow))
+    if not all([rsi is not None, ema9, ema21, ema12, ema26]):
+        return {"signal": "NO TRADE", "confidence": 0}
+
+    # Align EMA12 and EMA26 to the same candle positions.
+    macd_line = [
+        fast - slow
+        for fast, slow in zip(ema12[-len(ema26):], ema26)
     ]
 
-    macd_signal = ema(signal_line_values, 9)
+    macd_signal = calculate_ema(macd_line, 9)
 
     if not macd_signal:
-        return {
-            "signal": "NO TRADE",
-            "confidence": 0
-        }
+        return {"signal": "NO TRADE", "confidence": 0}
 
-    macd_signal_value = macd_signal[-1]
-
-    ema_fast = ema(closes, 9)[-1]
-    ema_slow = ema(closes, 21)[-1]
+    macd = macd_line[-1]
+    signal_line = macd_signal[-1]
 
     bullish = (
-        ema_fast > ema_slow
-        and macd > macd_signal_value
+        ema9[-1] > ema21[-1]
+        and macd > signal_line
         and 50 < rsi < 70
     )
 
     bearish = (
-        ema_fast < ema_slow
-        and macd < macd_signal_value
+        ema9[-1] < ema21[-1]
+        and macd < signal_line
         and 30 < rsi < 50
     )
 
     if bullish:
         signal = "CALL"
         confidence = 70
-
     elif bearish:
         signal = "PUT"
         confidence = 70
-
     else:
         signal = "NO TRADE"
         confidence = 0
@@ -191,13 +216,15 @@ def analyze_candles(candles):
     return {
         "signal": signal,
         "confidence": confidence,
+        "confidence_note": "Heuristic score, not win probability",
         "rsi": rsi,
-        "ema_fast": round(ema_fast, 6),
-        "ema_slow": round(ema_slow, 6),
+        "ema9": round(ema9[-1], 6),
+        "ema21": round(ema21[-1], 6),
         "macd": round(macd, 8),
-        "macd_signal": round(macd_signal_value, 8),
+        "macd_signal": round(signal_line, 8),
         "candles_used": len(closes),
-        "message": "Technical analysis only; not a guaranteed prediction."
+        "provider": "Biquote",
+        "message": "Technical analysis only. No guaranteed prediction."
     }
 
 
@@ -212,50 +239,75 @@ def home():
 def health():
     return jsonify({
         "status": "online",
-        "api_key_configured": bool(API_KEY),
-        "stream": "Not enabled in this demo"
+        "provider": "Biquote",
+        "stream": "Polling only"
     })
 
 
 @app.get("/api/candles")
 def candles():
     try:
-        params = {
-            key: request.args[key]
-            for key in ("venue", "symbol", "tf", "limit")
-            if key in request.args
-        }
+        symbol = request.args.get("symbol", "EURUSD")
+        tf = request.args.get("tf", "60")
+        limit = request.args.get("limit", "100")
 
-        if not params.get("symbol"):
-            return jsonify(error="Symbol is required"), 400
+        data, cached = fetch_candles(
+            symbol, tf, limit
+        )
 
-        data, cached = get_candles(params)
-
-        return jsonify({
-            "source": "OTCharts",
-            "cached": cached,
-            "data": data
-        })
+        data["cached"] = cached
+        return jsonify(data)
 
     except requests.RequestException as error:
         return jsonify({
-            "error": "Candle API request failed",
+            "error": "Market data request failed",
             "details": str(error)
         }), 502
 
     except Exception as error:
-        return jsonify(error=str(error)), 503
+        return jsonify({"error": str(error)}), 400
+
+
+@app.get("/api/signal")
+def signal():
+    try:
+        symbol = request.args.get("symbol", "EURUSD")
+        tf = request.args.get("tf", "60")
+
+        data, cached = fetch_candles(symbol, tf, 100)
+        result = analyze(data["candles"])
+
+        result["symbol"] = data["symbol"]
+        result["provider"] = "Biquote"
+        result["cached"] = cached
+        result["last_candle_time"] = data["candles"][-1]["time"]
+
+        return jsonify(result)
+
+    except requests.RequestException as error:
+        return jsonify({
+            "signal": "NO TRADE",
+            "error": "Market data request failed",
+            "details": str(error)
+        }), 502
+
+    except Exception as error:
+        return jsonify({
+            "signal": "NO TRADE",
+            "error": str(error)
+        }), 400
 
 
 @app.post("/api/analyze")
-def analyze():
+def analyze_route():
     try:
         payload = request.get_json(silent=True) or {}
-        candles = extract_candles(payload)
+        candles = payload.get("candles", [])
 
-        result = analyze_candles(candles)
+        if not isinstance(candles, list):
+            return jsonify(error="Candles must be a list"), 400
 
-        return jsonify(result)
+        return jsonify(analyze(candles))
 
     except Exception as error:
         return jsonify(error=str(error)), 400
@@ -265,10 +317,7 @@ def analyze():
 def stream():
     return jsonify({
         "status": "unavailable",
-        "message": (
-            "Live Stream is not enabled. "
-            "Use manual candle loading on the Free Plan."
-        )
+        "message": "Use candle polling. Live stream is not configured."
     }), 501
 
 
