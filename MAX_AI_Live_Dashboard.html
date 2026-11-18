@@ -6,77 +6,207 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MAX AI Trading Dashboard</title>
 <style>
-body{margin:0;background:#080d19;color:white;font-family:Arial;padding:18px}
-h1{color:#a78bfa}select,button{padding:13px;margin:7px 0;width:100%;border-radius:9px;border:0;font-size:16px}
-button{background:#16a34a;color:white;font-weight:bold}
-.card{background:#172033;padding:16px;border-radius:12px;margin:12px 0}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#a7f3d0}
-small{color:#facc15}
+*{box-sizing:border-box}
+body{
+ margin:0;padding:16px;background:#080d19;color:white;
+ font-family:Arial,sans-serif
+}
+h1{color:#a78bfa;margin-bottom:5px}
+.subtitle{color:#94a3b8}
+.card{
+ background:#172033;padding:17px;border-radius:14px;
+ margin:14px 0;border:1px solid #29364d
+}
+label{display:block;margin:12px 0 6px;color:#cbd5e1}
+select,button{
+ width:100%;padding:14px;border-radius:9px;
+ border:0;font-size:16px;margin:6px 0
+}
+select{background:#263449;color:white}
+button{background:#7c3aed;color:white;font-weight:bold}
+button:disabled{opacity:.5}
+.signal{
+ font-size:30px;font-weight:bold;text-align:center;
+ padding:18px;border-radius:10px;background:#263449
+}
+.green{color:#4ade80}
+.red{color:#fb7185}
+.yellow{color:#facc15}
+.metric{
+ display:flex;justify-content:space-between;
+ padding:11px 0;border-bottom:1px solid #334155
+}
+.metric:last-child{border:0}
+small{color:#94a3b8}
+#status{font-weight:bold}
+.notice{color:#facc15;font-size:13px;line-height:1.5}
 </style>
 </head>
 <body>
+
 <h1>MAX AI</h1>
-<p>Live Market Data Dashboard</p>
+<p class="subtitle">AI Trading Signal Dashboard</p>
+
 <div class="card">
-<label>Market</label>
-<select id="venue">
-<option value="quotex">Quotex OTC</option>
-<option value="forex">Real Forex</option>
-</select>
-<label>Symbol</label>
-<select id="symbol">
-<option>EURUSD_otc</option>
-<option>GBPUSD_otc</option>
-<option>USDJPY_otc</option>
-<option>EURUSD</option>
-<option>GBPUSD</option>
-<option>USDJPY</option>
-</select>
-<button onclick="loadCandles()">Load Candles</button>
-<button onclick="connect()">Connect Live Stream</button>
-<button onclick="disconnect()">Disconnect</button>
+ <label>Select Forex Pair</label>
+ <select id="symbol">
+  <option value="EURUSD">EURUSD</option>
+  <option value="GBPUSD">GBPUSD</option>
+  <option value="USDJPY">USDJPY</option>
+  <option value="AUDUSD">AUDUSD</option>
+  <option value="USDCAD">USDCAD</option>
+  <option value="USDCHF">USDCHF</option>
+ </select>
+
+ <button id="refreshBtn" onclick="loadSignal()">
+  GET LIVE SIGNAL
+ </button>
+
+ <button onclick="startAuto()">START AUTO UPDATE</button>
+ <button onclick="stopAuto()" style="background:#475569">
+  STOP AUTO UPDATE
+ </button>
+
+ <p class="notice">
+ Data source: Biquote standard Forex.
+ This is not Quotex OTC data.
+ </p>
 </div>
+
 <div class="card">
-<h3>Connection Status</h3>
-<p id="status">Not Connected</p>
-<small>Live data requires a valid API plan and server key.</small>
+ <h3>Connection Status</h3>
+ <p id="status">Connecting...</p>
+ <small id="updated">Waiting for first update</small>
 </div>
+
 <div class="card">
-<h3>Market Data</h3>
-<pre id="data">Waiting for data...</pre>
+ <h3>MAX AI Signal</h3>
+ <div id="signal" class="signal yellow">WAITING</div>
+ <p style="text-align:center" id="pairName">EURUSD</p>
+ <div class="metric">
+  <span>Confidence Score</span>
+  <b id="confidence">--</b>
+ </div>
+ <div class="metric">
+  <span>Signal Expiry Reference</span>
+  <b>1 Minute</b>
+ </div>
 </div>
+
+<div class="card">
+ <h3>Technical Indicators</h3>
+ <div class="metric"><span>RSI</span><b id="rsi">--</b></div>
+ <div class="metric"><span>EMA 9</span><b id="ema9">--</b></div>
+ <div class="metric"><span>EMA 21</span><b id="ema21">--</b></div>
+ <div class="metric"><span>MACD</span><b id="macd">--</b></div>
+ <div class="metric"><span>MACD Signal</span><b id="macdSignal">--</b></div>
+ <div class="metric"><span>Candles Used</span><b id="candles">--</b></div>
+</div>
+
+<div class="card">
+ <h3>Signal Information</h3>
+ <p id="message">No signal received yet.</p>
+ <small>Signals are technical estimates, not guaranteed predictions.</small>
+</div>
+
 <script>
-let source=null;
-const $=id=>document.getElementById(id);
-function params(){
-return new URLSearchParams({
-venue:$('venue').value,
-symbol:$('symbol').value,
-tf:'60',
-limit:'100'
-});
+const $ = id => document.getElementById(id);
+let timer = null;
+let busy = false;
+
+function showValue(id,value){
+ $(id).textContent =
+  value === undefined || value === null ? "--" : value;
 }
-async function loadCandles(){
-$('status').textContent='Loading candles...';
-try{
-let r=await fetch('/api/candles?'+params());
-let t=await r.text();
-$('data').textContent=t;
-$('status').textContent=r.ok?'Candles received':'API Error: '+r.status;
-}catch(e){$('status').textContent='Connection error: '+e.message;}
+
+async function loadSignal(){
+ if(busy) return;
+ busy = true;
+ $("refreshBtn").disabled = true;
+ $("status").textContent = "Fetching market data...";
+
+ const symbol = $("symbol").value;
+ $("pairName").textContent = symbol;
+
+ try{
+  const response = await fetch(
+   "/api/signal?symbol=" +
+   encodeURIComponent(symbol) + "&tf=60",
+   {cache:"no-store"}
+  );
+
+  const result = await response.json();
+
+  if(!response.ok || result.error){
+   throw new Error(result.error || "API Error " + response.status);
+  }
+
+  const signal = result.signal || "NO TRADE";
+  $("signal").textContent = signal;
+
+  $("signal").className = "signal " +
+   (signal === "CALL" ? "green" :
+    signal === "PUT" ? "red" : "yellow");
+
+  showValue("confidence",
+   result.confidence === undefined ? "--" :
+   result.confidence + "%");
+
+  showValue("rsi",result.rsi);
+  showValue("ema9",result.ema9);
+  showValue("ema21",result.ema21);
+  showValue("macd",result.macd);
+  showValue("macdSignal",result.macd_signal);
+  showValue("candles",result.candles_used);
+
+  $("message").textContent =
+   result.message || result.confidence_note ||
+   "Technical analysis updated.";
+
+  $("status").textContent =
+   "Connected - " + (result.provider || "API");
+
+  $("updated").textContent =
+   "Last update: " + new Date().toLocaleString();
+
+  if(result.last_candle_time){
+   $("updated").textContent +=
+    " | Candle: " +
+    new Date(result.last_candle_time * 1000).toLocaleTimeString();
+  }
+
+ }catch(error){
+  $("status").textContent = "Error: " + error.message;
+  $("signal").textContent = "NO TRADE";
+  $("signal").className = "signal yellow";
+  $("message").textContent =
+   "Data unavailable. Please try again.";
+ }finally{
+  busy = false;
+  $("refreshBtn").disabled = false;
+ }
 }
-function connect(){
-disconnect();
-let p=params();
-source=new EventSource('/api/stream?venue='+encodeURIComponent(p.get('venue'))+'&symbol='+encodeURIComponent(p.get('symbol')));
-source.onopen=()=> $('status').textContent='Stream Connected';
-source.onmessage=e=>$('data').textContent=e.data;
-source.onerror=()=> $('status').textContent='Stream error / reconnecting';
+
+function startAuto(){
+ stopAuto();
+ loadSignal();
+ timer = setInterval(loadSignal,60000);
+ $("status").textContent = "Auto update enabled";
 }
-function disconnect(){
-if(source){source.close();source=null;}
-$('status').textContent='Disconnected';
+
+function stopAuto(){
+ if(timer){
+  clearInterval(timer);
+  timer = null;
+ }
+ $("status").textContent = "Auto update stopped";
 }
+
+$("symbol").addEventListener("change",loadSignal);
+
+loadSignal();
+startAuto();
 </script>
+
 </body>
 </html>
