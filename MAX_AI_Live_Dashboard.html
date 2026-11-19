@@ -4,16 +4,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MAX AI PRO - Advanced Dashboard</title>
+<title>MAX AI PRO</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:14px;background:#080d19;color:white;font-family:Arial,sans-serif}
+body{margin:0;padding:14px;background:#080d19;color:white;font-family:Arial}
 h1{color:#a78bfa}
-h3{margin-top:5px}
 .card{background:#172033;padding:16px;border-radius:14px;margin:14px 0;border:1px solid #334155}
 select,input,button{width:100%;padding:12px;margin:6px 0;border:0;border-radius:8px;font-size:15px}
 select,input{background:#263449;color:white}
-button{background:#7c3aed;color:white;font-weight:bold;cursor:pointer}
+button{background:#7c3aed;color:white;font-weight:bold}
 .secondary{background:#475569}
 .greenbtn{background:#15803d}
 .redbtn{background:#b91c1c}
@@ -23,18 +22,15 @@ label{display:block;color:#cbd5e1;font-size:13px;margin-top:8px}
 .presetrow button{font-size:11px;padding:11px 3px}
 .metric{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #334155}
 .signal{text-align:center;padding:20px;font-size:28px;font-weight:bold;border-radius:10px;background:#263449}
-.green{color:#4ade80}
-.red{color:#fb7185}
-.yellow{color:#facc15}
+.green{color:#4ade80}.red{color:#fb7185}.yellow{color:#facc15}
+.bar{height:12px;background:#334155;border-radius:10px;overflow:hidden;display:flex;margin:10px 0}
+#callBar{background:#16a34a}#putBar{background:#ef4444}
+canvas{width:100%;height:210px;background:#101827;border-radius:9px}
 small,.muted{color:#94a3b8}
 .notice{color:#facc15;font-size:13px;line-height:1.5}
-.bar{height:12px;background:#334155;border-radius:10px;overflow:hidden;display:flex;margin:10px 0}
-#callBar{background:#16a34a}
-#putBar{background:#ef4444}
-canvas{width:100%;height:210px;background:#101827;border-radius:9px}
+.scroller{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
-.scroller{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -42,42 +38,33 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <h1>MAX AI PRO</h1>
 <p class="muted">Advanced AI Trading Signal Dashboard</p>
 
-<!-- MARKET -->
 <div class="card">
 <h3>Market Selection</h3>
 <label>Forex Pair</label>
 <select id="symbol">
-<option>EURUSD</option>
-<option>GBPUSD</option>
-<option>USDJPY</option>
-<option>AUDUSD</option>
-<option>USDCAD</option>
-<option>USDCHF</option>
+<option>EURUSD</option><option>GBPUSD</option>
+<option>USDJPY</option><option>AUDUSD</option>
+<option>USDCAD</option><option>USDCHF</option>
 </select>
 <button onclick="refreshAll()">GET LIVE ANALYSIS</button>
 <button onclick="startAuto()">START AUTO UPDATE</button>
 <button class="secondary" onclick="stopAuto()">STOP AUTO UPDATE</button>
 <p id="status">Waiting for data...</p>
 <small id="updated">No update yet</small>
-<p class="notice">Data source: Biquote Standard Forex. This is NOT Quotex OTC data.</p>
+<p class="notice">Biquote Standard Forex data. NOT Quotex OTC data.</p>
 </div>
 
-<!-- SIGNAL -->
 <div class="card">
 <h3>MAX AI Signal</h3>
 <div id="signal" class="signal yellow">WAITING</div>
 <div class="metric"><span>Direction</span><b id="prediction">--</b></div>
 <div class="metric"><span>CALL Score</span><b id="callPct">--</b></div>
 <div class="metric"><span>PUT Score</span><b id="putPct">--</b></div>
-<div class="bar">
-<div id="callBar" style="width:50%"></div>
-<div id="putBar" style="width:50%"></div>
-</div>
+<div class="bar"><div id="callBar" style="width:50%"></div><div id="putBar" style="width:50%"></div></div>
 <div class="metric"><span>Indicator Score</span><b id="confidence">--</b></div>
-<p class="muted">Indicator score is not a win probability.</p>
+<small>Indicator score is not a win probability.</small>
 </div>
 
-<!-- STRATEGY -->
 <div class="card">
 <h3>Strategy Presets</h3>
 <div class="presetrow">
@@ -86,7 +73,6 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <button onclick="applyPreset('aggressive')">AGGRESSIVE</button>
 </div>
 <p id="presetInfo" class="muted">Select a strategy preset.</p>
-
 <h3>Custom Settings</h3>
 <div class="grid">
 <div><label>RSI Period</label><input id="rsiPeriod" type="number" value="14"></div>
@@ -96,24 +82,20 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 </div>
 <label>Expiry</label>
 <select id="expiry">
-<option value="1">1 Candle</option>
-<option value="2">2 Candles</option>
-<option value="3">3 Candles</option>
-<option value="5">5 Candles</option>
+<option value="1">1 Candle</option><option value="2">2 Candles</option>
+<option value="3">3 Candles</option><option value="5">5 Candles</option>
 </select>
-<label>Backtest Payout Return (example: 0.80 = 80%)</label>
+<label>Backtest Payout Return</label>
 <input id="payout" type="number" value="0.80" step="0.05">
 <button onclick="refreshAll()">APPLY SETTINGS</button>
 </div>
 
-<!-- CHART -->
 <div class="card">
 <h3>Live Candle Chart</h3>
 <canvas id="chart"></canvas>
 <small id="chartStatus">Waiting for candles...</small>
 </div>
 
-<!-- INDICATORS -->
 <div class="card">
 <h3>Technical Indicators</h3>
 <div class="metric"><span>RSI</span><b id="rsi">--</b></div>
@@ -124,15 +106,13 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <div class="metric"><span>Candles Used</span><b id="candlesUsed">--</b></div>
 </div>
 
-<!-- BACKTEST -->
 <div class="card">
 <h3>CSV Historical Backtesting</h3>
-<p class="muted">CSV file must contain open, high, low and close columns. At least 100 valid candles are required.</p>
+<p class="muted">CSV must contain open, high, low and close columns. At least 100 valid candles are required.</p>
 <input id="csvFile" type="file" accept=".csv">
 <p id="csvStatus" class="muted">No CSV loaded.</p>
 <button onclick="runBacktest('csv')">BACKTEST CSV DATA</button>
 <button class="secondary" onclick="runBacktest('live')">BACKTEST LIVE CANDLES</button>
-
 <div class="metric"><span>Data Tested</span><b id="btData">--</b></div>
 <div class="metric"><span>Total Trades</span><b id="btTrades">--</b></div>
 <div class="metric"><span>Wins / Losses</span><b id="btWL">--</b></div>
@@ -146,10 +126,9 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <small>Historical simulation only. Actual payout, spread, slippage and execution delays are excluded.</small>
 </div>
 
-<!-- OPTIMIZER -->
 <div class="card">
 <h3>MAX AI Strategy Optimizer</h3>
-<p class="muted">Tests multiple RSI, EMA, confidence and expiry combinations. Uses the first 70% of candles for training and the final 30% for separate testing.</p>
+<p class="muted">Tests RSI, EMA, confidence and expiry settings. First 70% for training, final 30% for testing.</p>
 <button onclick="runOptimizer()">RUN AI OPTIMIZER</button>
 <div class="metric"><span>Best RSI</span><b id="optRSI">--</b></div>
 <div class="metric"><span>Best EMA Fast / Slow</span><b id="optEMA">--</b></div>
@@ -164,14 +143,11 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <button class="secondary" onclick="applyOptimized()">APPLY BEST SETTINGS</button>
 </div>
 
-<!-- PAPER TRADING -->
 <div class="card">
 <h3>Paper Trading - Virtual Money</h3>
 <div class="metric"><span>Virtual Balance</span><b id="paperBalance">1000.00</b></div>
-<label>Virtual Stake</label>
-<input id="paperStake" type="number" value="10">
-<label>Payout Return</label>
-<input id="paperPayout" type="number" value="0.80" step="0.05">
+<label>Virtual Stake</label><input id="paperStake" type="number" value="10">
+<label>Payout Return</label><input id="paperPayout" type="number" value="0.80" step="0.05">
 <div class="grid">
 <button class="greenbtn" onclick="openPaper('CALL')">PAPER CALL</button>
 <button class="redbtn" onclick="openPaper('PUT')">PAPER PUT</button>
@@ -183,7 +159,6 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 <small>Virtual trades only. No broker orders are placed.</small>
 </div>
 
-<!-- HISTORY -->
 <div class="card">
 <h3>Signal History</h3>
 <div class="scroller">
@@ -196,671 +171,354 @@ td,th{text-align:left;padding:9px 5px;border-bottom:1px solid #334155}
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
+let timer=null,busy=false,liveCandles=[],csvCandles=[];
+let lastHistoryCandle=null,pendingPaper=null,optimizedSettings=null;
+let paper={balance:1000,wins:0,losses:0};
 
-let timer = null;
-let busy = false;
-let liveCandles = [];
-let csvCandles = [];
-let lastHistoryCandle = null;
-let pendingPaper = null;
-let optimizedSettings = null;
+function fmt(v,d=6){return Number.isFinite(Number(v))?Number(v).toFixed(d):"--"}
+function show(id,v){$(id).textContent=v??"--"}
 
-let paper = {
-  balance: 1000,
-  wins: 0,
-  losses: 0
-};
-
-function num(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+function settings(){
+ const s={
+  rsi:Number($("rsiPeriod").value),
+  fast:Number($("emaFast").value),
+  slow:Number($("emaSlow").value),
+  threshold:Number($("threshold").value),
+  expiry:Number($("expiry").value),
+  payout:Number($("payout").value)
+ };
+ if(!Number.isInteger(s.rsi)||s.rsi<2||s.rsi>50||
+ !Number.isInteger(s.fast)||s.fast<2||
+ !Number.isInteger(s.slow)||s.slow<=s.fast||
+ s.threshold<34||s.threshold>100||
+ s.payout<=0||s.payout>2)throw Error("Check strategy settings.");
+ return s;
 }
 
-function fmt(v, digits=6) {
-  const n = num(v);
-  return n === null ? "--" : n.toFixed(digits);
+function applyPreset(name){
+ const p={
+ conservative:{rsi:14,fast:9,slow:21,threshold:100},
+ balanced:{rsi:14,fast:9,slow:21,threshold:67},
+ aggressive:{rsi:7,fast:5,slow:13,threshold:34}
+ }[name];
+ $("rsiPeriod").value=p.rsi;
+ $("emaFast").value=p.fast;
+ $("emaSlow").value=p.slow;
+ $("threshold").value=p.threshold;
+ $("presetInfo").textContent=name.toUpperCase()+" preset applied.";
 }
 
-function settings() {
-  const s = {
-    rsi: Number($("rsiPeriod").value),
-    fast: Number($("emaFast").value),
-    slow: Number($("emaSlow").value),
-    threshold: Number($("threshold").value),
-    expiry: Number($("expiry").value),
-    payout: Number($("payout").value)
-  };
+function ema(v,p){
+ if(v.length<p)return [];
+ const k=2/(p+1);
+ let x=v.slice(0,p).reduce((a,b)=>a+b,0)/p;
+ const out=Array(p-1).fill(null);out.push(x);
+ for(let i=p;i<v.length;i++){x=v[i]*k+x*(1-k);out.push(x)}
+ return out;
+}
 
-  if (!Number.isInteger(s.rsi) || s.rsi < 2 || s.rsi > 50 ||
-      !Number.isInteger(s.fast) || s.fast < 2 ||
-      !Number.isInteger(s.slow) || s.slow <= s.fast ||
-      s.threshold < 34 || s.threshold > 100 ||
-      s.payout <= 0 || s.payout > 2) {
-    throw Error("Please check your strategy settings.");
+function rsiCalc(v,p){
+ if(v.length<=p)return null;
+ let gain=0,loss=0;
+ for(let i=v.length-p;i<v.length;i++){
+  const d=v[i]-v[i-1];
+  if(d>0)gain+=d;else loss-=d;
+ }
+ if(loss===0)return 100;
+ return 100-100/(1+gain/loss);
+}
+
+function analyze(v,s){
+ if(v.length<Math.max(s.rsi,s.slow,26)+2)return null;
+ const f=ema(v,s.fast),sl=ema(v,s.slow);
+ const e12=ema(v,12),e26=ema(v,26),m=[];
+ for(let i=0;i<v.length;i++){
+  if(e12[i]!==null&&e26[i]!==null)m.push(e12[i]-e26[i]);
+ }
+ const ms=ema(m,9);
+ const rv=rsiCalc(v,s.rsi);
+ const mv=m[m.length-1],sv=ms[ms.length-1];
+ if(rv===null||sv===undefined)return null;
+ let call=0,put=0;
+ if(f.at(-1)>sl.at(-1))call++;else if(f.at(-1)<sl.at(-1))put++;
+ if(mv>sv)call++;else if(mv<sv)put++;
+ if(rv>50&&rv<70)call++;else if(rv<50&&rv>30)put++;
+ const total=call+put;
+ const up=total?Math.round(call/total*100):50;
+ const down=100-up;
+ let signal="NO TRADE";
+ if(up>=s.threshold)signal="CALL";
+ else if(down>=s.threshold)signal="PUT";
+ return {rsi:rv,fast:f.at(-1),slow:sl.at(-1),macd:mv,
+ macdSignal:sv,up,down,signal,confidence:Math.max(up,down)};
+}
+
+/* LIVE DATA: REQUEST UP TO 500 CANDLES */
+async function fetchCandles(){
+ const pair=$("symbol").value;
+ const url="/api/candles?symbol="+encodeURIComponent(pair)+"&tf=60&limit=500";
+ const response=await fetch(url,{cache:"no-store"});
+ const data=await response.json();
+ if(!response.ok||data.error)throw Error(data.error||"Candle API error");
+ const rows=Array.isArray(data)?data:(data.candles||data.bars||data.data||[]);
+ const candles=rows.map(c=>({
+  time:Number(c.time??c.timestamp??c.openTime),
+  open:Number(c.open),high:Number(c.high),
+  low:Number(c.low),close:Number(c.close)
+ })).filter(c=>[c.open,c.high,c.low,c.close].every(Number.isFinite));
+ if(!candles.length)throw Error("No candle data received.");
+ return candles.sort((a,b)=>a.time-b.time);
+}
+
+function drawChart(id,data){
+ const canvas=$(id),w=canvas.clientWidth||300,h=210;
+ const ratio=window.devicePixelRatio||1;
+ canvas.width=w*ratio;canvas.height=h*ratio;
+ const ctx=canvas.getContext("2d");
+ ctx.setTransform(ratio,0,0,ratio,0,0);
+ ctx.clearRect(0,0,w,h);
+ if(!data.length)return;
+ const lo=Math.min(...data.map(c=>c.low));
+ const hi=Math.max(...data.map(c=>c.high));
+ const range=hi-lo||0.0001;
+ const y=v=>h-10-(v-lo)/range*(h-20);
+ const step=w/data.length,bw=Math.max(2,step*.55);
+ data.forEach((c,i)=>{
+  const x=i*step+step/2;
+  const color=c.close>=c.open?"#22c55e":"#ef4444";
+  ctx.strokeStyle=color;ctx.fillStyle=color;
+  ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
+  ctx.fillRect(x-bw/2,Math.min(y(c.open),y(c.close)),bw,
+   Math.max(2,Math.abs(y(c.open)-y(c.close))));
+ });
+}
+
+function updateSignal(d){
+ show("signal",d.signal);
+ $("signal").className="signal "+(d.signal==="CALL"?"green":d.signal==="PUT"?"red":"yellow");
+ show("prediction",d.signal==="CALL"?"UP ↑":d.signal==="PUT"?"DOWN ↓":"UNCERTAIN");
+ show("callPct",d.up+"%");show("putPct",d.down+"%");
+ $("callBar").style.width=d.up+"%";$("putBar").style.width=d.down+"%";
+ show("confidence",d.confidence+"%");
+ show("rsi",fmt(d.rsi,2));show("emaFastValue",fmt(d.fast));
+ show("emaSlowValue",fmt(d.slow));
+ show("macd",fmt(d.macd,8));show("macdSignal",fmt(d.macdSignal,8));
+ show("candlesUsed",liveCandles.length);
+}
+
+async function refreshAll(){
+ if(busy)return;busy=true;
+ $("status").textContent="Loading market data...";
+ try{
+  const s=settings();
+  liveCandles=await fetchCandles();
+  const result=analyze(liveCandles.map(c=>c.close),s);
+  if(!result)throw Error("Not enough candles for analysis.");
+  updateSignal(result);drawChart("chart",liveCandles);
+  $("chartStatus").textContent=liveCandles.length+" candles loaded · "+$("symbol").value;
+  $("status").textContent="Connected - Biquote";
+  $("updated").textContent="Updated: "+new Date().toLocaleString();
+  settlePaper();
+  const last=liveCandles.at(-1);
+  if(last.time!==lastHistoryCandle){
+   lastHistoryCandle=last.time;
+   saveHistory({time:new Date().toLocaleTimeString(),
+    pair:$("symbol").value,signal:result.signal,
+    score:result.confidence+"%",candle:last.time});
   }
-  return s;
+ }catch(e){$("status").textContent="Error: "+e.message}
+ finally{busy=false}
 }
 
-function applyPreset(name) {
-  const presets = {
-    conservative: {rsi:14, fast:9, slow:21, threshold:100},
-    balanced: {rsi:14, fast:9, slow:21, threshold:67},
-    aggressive: {rsi:7, fast:5, slow:13, threshold:34}
-  };
-
-  const p = presets[name];
-  $("rsiPeriod").value = p.rsi;
-  $("emaFast").value = p.fast;
-  $("emaSlow").value = p.slow;
-  $("threshold").value = p.threshold;
-  $("presetInfo").textContent =
-    name.toUpperCase() + " preset applied. Press APPLY SETTINGS.";
+function saveHistory(item){
+ let h=JSON.parse(localStorage.getItem("maxHistory")||"[]");
+ if(h.some(x=>x.candle===item.candle&&x.pair===item.pair))return;
+ h.unshift(item);localStorage.setItem("maxHistory",JSON.stringify(h.slice(0,50)));
+ renderHistory();
 }
-
-function ema(values, period) {
-  if (values.length < period) return [];
-
-  const k = 2 / (period + 1);
-  let value = 0;
-
-  for (let i=0; i<period; i++) value += values[i];
-  value /= period;
-
-  const output = new Array(period-1).fill(null);
-  output.push(value);
-
-  for (let i=period; i<values.length; i++) {
-    value = values[i]*k + value*(1-k);
-    output.push(value);
-  }
-  return output;
-}
-
-function calculateRSI(values, period) {
-  if (values.length <= period) return null;
-
-  let gains = 0;
-  let losses = 0;
-
-  for (let i=values.length-period; i<values.length; i++) {
-    const diff = values[i] - values[i-1];
-    if (diff > 0) gains += diff;
-    else losses -= diff;
-  }
-
-  if (losses === 0) return 100;
-  return 100 - 100/(1 + gains/losses);
-}
-
-function analyze(values, s) {
-  if (values.length < Math.max(s.rsi,s.slow,26)+2) return null;
-
-  const fast = ema(values,s.fast);
-  const slow = ema(values,s.slow);
-  const e12 = ema(values,12);
-  const e26 = ema(values,26);
-  const macdValues = [];
-
-  for (let i=0; i<values.length; i++) {
-    if (e12[i] !== null && e26[i] !== null) {
-      macdValues.push(e12[i]-e26[i]);
-    }
-  }
-
-  const macdSignals = ema(macdValues,9);
-  const rsiValue = calculateRSI(values,s.rsi);
-  const macdValue = macdValues[macdValues.length-1];
-  const macdSignalValue = macdSignals[macdSignals.length-1];
-
-  if (rsiValue === null || macdSignalValue === undefined) return null;
-
-  let call = 0;
-  let put = 0;
-
-  if (fast[fast.length-1] > slow[slow.length-1]) call++;
-  else if (fast[fast.length-1] < slow[slow.length-1]) put++;
-
-  if (macdValue > macdSignalValue) call++;
-  else if (macdValue < macdSignalValue) put++;
-
-  if (rsiValue > 50 && rsiValue < 70) call++;
-  else if (rsiValue < 50 && rsiValue > 30) put++;
-
-  const total = call+put;
-  const callScore = total ? Math.round(call/total*100) : 50;
-  const putScore = 100-callScore;
-
-  let signal = "NO TRADE";
-  if (callScore >= s.threshold) signal = "CALL";
-  else if (putScore >= s.threshold) signal = "PUT";
-
-  return {
-    rsi:rsiValue,
-    fast:fast[fast.length-1],
-    slow:slow[slow.length-1],
-    macd:macdValue,
-    macdSignal:macdSignalValue,
-    up:callScore,
-    down:putScore,
-    signal:signal,
-    confidence:Math.max(callScore,putScore)
-  };
-}
-
-async function fetchCandles() {
-  const pair = $("symbol").value;
-  const url = "/api/candles?symbol=" +
-    encodeURIComponent(pair) + "&tf=60&limit=100";
-
-  const response = await fetch(url,{cache:"no-store"});
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    throw Error(data.error || "Candle API error");
-  }
-
-  const rows = Array.isArray(data)
-    ? data
-    : (data.candles || data.bars || data.data || []);
-
-  const candles = rows.map(c => ({
-    time:Number(c.time ?? c.timestamp ?? c.openTime),
-    open:Number(c.open),
-    high:Number(c.high),
-    low:Number(c.low),
-    close:Number(c.close)
-  })).filter(c =>
-    Number.isFinite(c.close) &&
-    Number.isFinite(c.open) &&
-    Number.isFinite(c.high) &&
-    Number.isFinite(c.low)
-  );
-
-  if (!candles.length) throw Error("No candle data received.");
-  return candles.sort((a,b)=>a.time-b.time);
-}
-
-function drawChart(id,data) {
-  const canvas = $(id);
-  const width = canvas.clientWidth || 300;
-  const height = 210;
-  const ratio = window.devicePixelRatio || 1;
-
-  canvas.width = width*ratio;
-  canvas.height = height*ratio;
-
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(ratio,0,0,ratio,0,0);
-  ctx.clearRect(0,0,width,height);
-
-  if (!data.length) return;
-
-  const low = Math.min(...data.map(c=>c.low));
-  const high = Math.max(...data.map(c=>c.high));
-  const range = high-low || 0.0001;
-
-  const y = value => height-10-(value-low)/range*(height-20);
-  const step = width/data.length;
-  const bodyWidth = Math.max(2,step*.55);
-
-  data.forEach((c,i)=>{
-    const x = i*step+step/2;
-    const color = c.close>=c.open ? "#22c55e" : "#ef4444";
-
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(x,y(c.high));
-    ctx.lineTo(x,y(c.low));
-    ctx.stroke();
-
-    ctx.fillRect(
-      x-bodyWidth/2,
-      Math.min(y(c.open),y(c.close)),
-      bodyWidth,
-      Math.max(2,Math.abs(y(c.open)-y(c.close)))
-    );
+function renderHistory(){
+ const h=JSON.parse(localStorage.getItem("maxHistory")||"[]");
+ $("history").innerHTML="";
+ if(!h.length){$("history").innerHTML="<tr><td colspan='4'>No history yet</td></tr>";return}
+ h.forEach(item=>{
+  const tr=document.createElement("tr");
+  [item.time,item.pair,item.signal,item.score].forEach(v=>{
+   const td=document.createElement("td");td.textContent=v;tr.appendChild(td);
   });
+  $("history").appendChild(tr);
+ });
+}
+function clearHistory(){
+ if(confirm("Clear signal history?")){localStorage.removeItem("maxHistory");renderHistory()}
 }
 
-function show(id,value) {
-  $(id).textContent = value ?? "--";
+function parseCSV(text){
+ const lines=text.trim().split(/\r?\n/).filter(Boolean);
+ if(lines.length<2)throw Error("CSV file is empty.");
+ const heads=lines[0].toLowerCase().split(",").map(x=>x.trim());
+ const ix=["open","high","low","close"].map(x=>heads.indexOf(x));
+ if(ix.some(x=>x<0))throw Error("CSV needs open, high, low, close columns.");
+ const rows=[];
+ for(let i=1;i<lines.length;i++){
+  const cells=lines[i].split(",");
+  const c={open:Number(cells[ix[0]]),high:Number(cells[ix[1]]),
+   low:Number(cells[ix[2]]),close:Number(cells[ix[3]])};
+  if(Object.values(c).every(Number.isFinite))rows.push(c);
+ }
+ if(rows.length<100)throw Error("At least 100 valid candles required.");
+ return rows;
 }
-
-function updateSignal(d) {
-  show("signal",d.signal);
-
-  $("signal").className = "signal " +
-    (d.signal==="CALL" ? "green" :
-     d.signal==="PUT" ? "red" : "yellow");
-
-  show("prediction",
-    d.signal==="CALL" ? "UP ↑" :
-    d.signal==="PUT" ? "DOWN ↓" : "UNCERTAIN");
-
-  show("callPct",d.up+"%");
-  show("putPct",d.down+"%");
-  $("callBar").style.width = d.up+"%";
-  $("putBar").style.width = d.down+"%";
-
-  show("confidence",d.confidence+"%");
-  show("rsi",fmt(d.rsi,2));
-  show("emaFastValue",fmt(d.fast,6));
-  show("emaSlowValue",fmt(d.slow,6));
-  show("macd",fmt(d.macd,8));
-  show("macdSignal",fmt(d.macdSignal,8));
-  show("candlesUsed",liveCandles.length);
-}
-
-async function refreshAll() {
-  if (busy) return;
-  busy = true;
-  $("status").textContent = "Loading market data...";
-
-  try {
-    const s = settings();
-    liveCandles = await fetchCandles();
-
-    const result = analyze(liveCandles.map(c=>c.close),s);
-    if (!result) throw Error("Not enough candles for analysis.");
-
-    updateSignal(result);
-    drawChart("chart",liveCandles);
-
-    $("chartStatus").textContent =
-      liveCandles.length+" candles loaded · "+$("symbol").value;
-    $("status").textContent = "Connected - Biquote";
-    $("updated").textContent = "Updated: "+new Date().toLocaleString();
-
-    settlePaper();
-
-    const last = liveCandles[liveCandles.length-1];
-    if (last.time !== lastHistoryCandle) {
-      lastHistoryCandle = last.time;
-      saveHistory({
-        time:new Date().toLocaleTimeString(),
-        pair:$("symbol").value,
-        signal:result.signal,
-        score:result.confidence+"%",
-        candle:last.time
-      });
-    }
-  } catch(error) {
-    $("status").textContent = "Error: "+error.message;
-  } finally {
-    busy = false;
-  }
-}
-
-function saveHistory(item) {
-  let history = JSON.parse(localStorage.getItem("maxHistory") || "[]");
-
-  if (history.some(x=>x.candle===item.candle && x.pair===item.pair)) return;
-
-  history.unshift(item);
-  localStorage.setItem("maxHistory",JSON.stringify(history.slice(0,50)));
-  renderHistory();
-}
-
-function renderHistory() {
-  const history = JSON.parse(localStorage.getItem("maxHistory") || "[]");
-  $("history").innerHTML = "";
-
-  if (!history.length) {
-    $("history").innerHTML = "<tr><td colspan='4'>No history yet</td></tr>";
-    return;
-  }
-
-  history.forEach(item=>{
-    const tr = document.createElement("tr");
-    [item.time,item.pair,item.signal,item.score].forEach(value=>{
-      const td = document.createElement("td");
-      td.textContent = value;
-      tr.appendChild(td);
-    });
-    $("history").appendChild(tr);
-  });
-}
-
-function clearHistory() {
-  if (confirm("Clear signal history?")) {
-    localStorage.removeItem("maxHistory");
-    renderHistory();
-  }
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) throw Error("CSV file is empty.");
-
-  const headers = lines[0].toLowerCase().split(",").map(x=>x.trim());
-  const oi = headers.indexOf("open");
-  const hi = headers.indexOf("high");
-  const li = headers.indexOf("low");
-  const ci = headers.indexOf("close");
-
-  if ([oi,hi,li,ci].some(x=>x<0)) {
-    throw Error("CSV must contain open, high, low and close columns.");
-  }
-
-  const rows = [];
-
-  for (let i=1;i<lines.length;i++) {
-    const cells = lines[i].split(",");
-    const candle = {
-      open:Number(cells[oi]),
-      high:Number(cells[hi]),
-      low:Number(cells[li]),
-      close:Number(cells[ci])
-    };
-
-    if (Object.values(candle).every(Number.isFinite)) rows.push(candle);
-  }
-
-  if (rows.length < 100) throw Error("Please upload at least 100 valid candles.");
-  return rows;
-}
-
-$("csvFile").addEventListener("change",async event=>{
-  try {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    csvCandles = parseCSV(await file.text());
-    $("csvStatus").textContent = "Loaded "+csvCandles.length+" candles.";
-    optimizedSettings = null;
-  } catch(error) {
-    csvCandles = [];
-    $("csvStatus").textContent = "CSV error: "+error.message;
-  }
+$("csvFile").addEventListener("change",async e=>{
+ try{
+  const file=e.target.files[0];if(!file)return;
+  csvCandles=parseCSV(await file.text());
+  $("csvStatus").textContent="Loaded "+csvCandles.length+" candles.";
+  optimizedSettings=null;
+ }catch(err){csvCandles=[];$("csvStatus").textContent="CSV error: "+err.message}
 });
 
-function evaluateStrategy(values,s,start,end) {
-  let wins=0,losses=0,skipped=0;
-  let profit=0,grossWin=0,grossLoss=0;
-  let equity=100,peak=100,maxDrawdown=0;
-  const curve=[100];
-  const warm=Math.max(s.rsi,s.slow,26)+2;
-
-  for (let i=Math.max(start,warm);i+s.expiry<end;) {
-    const result=analyze(values.slice(0,i+1),s);
-
-    if (!result || result.signal==="NO TRADE") {
-      skipped++;
-      i++;
-      continue;
-    }
-
-    const entry=values[i];
-    const exit=values[i+s.expiry];
-
-    if (exit===entry) {
-      skipped++;
-      i++;
-      continue;
-    }
-
-    const won=result.signal==="CALL" ? exit>entry : exit<entry;
-
-    if (won) {
-      wins++;
-      profit+=s.payout;
-      grossWin+=s.payout;
-      equity+=s.payout;
-    } else {
-      losses++;
-      profit-=1;
-      grossLoss+=1;
-      equity-=1;
-    }
-
-    peak=Math.max(peak,equity);
-    maxDrawdown=Math.max(maxDrawdown,peak-equity);
-    curve.push(equity);
-    i+=s.expiry;
-  }
-
-  const trades=wins+losses;
-  return {
-    wins,losses,skipped,trades,profit,
-    rate:trades ? wins/trades*100 : 0,
-    factor:grossLoss ? grossWin/grossLoss : (grossWin ? Infinity : 0),
-    maxDrawdown,curve
-  };
+function evaluateStrategy(values,s,start,end){
+ let wins=0,losses=0,skipped=0,profit=0,grossWin=0,grossLoss=0;
+ let equity=100,peak=100,maxDrawdown=0;const curve=[100];
+ const warm=Math.max(s.rsi,s.slow,26)+2;
+ for(let i=Math.max(start,warm);i+s.expiry<end;){
+  const result=analyze(values.slice(0,i+1),s);
+  if(!result||result.signal==="NO TRADE"){skipped++;i++;continue}
+  const entry=values[i],exit=values[i+s.expiry];
+  if(exit===entry){skipped++;i++;continue}
+  const won=result.signal==="CALL"?exit>entry:exit<entry;
+  if(won){wins++;profit+=s.payout;grossWin+=s.payout;equity+=s.payout}
+  else{losses++;profit-=1;grossLoss++;equity--}
+  peak=Math.max(peak,equity);maxDrawdown=Math.max(maxDrawdown,peak-equity);
+  curve.push(equity);i+=s.expiry;
+ }
+ const trades=wins+losses;
+ return {wins,losses,skipped,trades,profit,
+  rate:trades?wins/trades*100:0,
+  factor:grossLoss?grossWin/grossLoss:(grossWin?Infinity:0),
+  maxDrawdown,curve};
 }
 
-function runBacktest(type) {
-  try {
-    const s=settings();
-    const data=type==="csv" ? csvCandles : liveCandles;
-
-    if (!data.length) throw Error("Load live candles or CSV data first.");
-
-    const values=data.map(c=>c.close);
-    const result=evaluateStrategy(values,s,0,values.length);
-
-    const profitFactor=result.factor;
-
-    show("btData",data.length+" candles");
-    show("btTrades",result.trades);
-    show("btWL",result.wins+" / "+result.losses);
-    show("btRate",result.trades ? result.rate.toFixed(1)+"%" : "--");
-    show("btProfit",(result.profit>=0?"+":"")+result.profit.toFixed(2));
-    show("btDrawdown",result.maxDrawdown.toFixed(2));
-    show("btPF",Number.isFinite(profitFactor)
-      ? profitFactor.toFixed(2)
-      : (profitFactor===Infinity ? "Infinity" : "--"));
-    show("btSkipped",result.skipped);
-
-    drawChart("equityChart",result.curve.map(v=>({
-      open:v,close:v,high:v,low:v
-    })));
-
-    $("btInfo").textContent =
-      "Simulation complete. Expiry: "+s.expiry+
-      " candle(s). Assumed stake: 1 unit. Payout return: "+s.payout;
-  } catch(error) {
-    $("btInfo").textContent="Backtest error: "+error.message;
-  }
+function runBacktest(type){
+ try{
+  const s=settings(),data=type==="csv"?csvCandles:liveCandles;
+  if(!data.length)throw Error("Load live candles or CSV first.");
+  const r=evaluateStrategy(data.map(c=>c.close),s,0,data.length);
+  show("btData",data.length+" candles");show("btTrades",r.trades);
+  show("btWL",r.wins+" / "+r.losses);
+  show("btRate",r.trades?r.rate.toFixed(1)+"%":"--");
+  show("btProfit",(r.profit>=0?"+":"")+r.profit.toFixed(2));
+  show("btDrawdown",r.maxDrawdown.toFixed(2));
+  show("btPF",Number.isFinite(r.factor)?r.factor.toFixed(2):(r.factor===Infinity?"Infinity":"--"));
+  show("btSkipped",r.skipped);
+  drawChart("equityChart",r.curve.map(v=>({open:v,close:v,high:v,low:v})));
+  $("btInfo").textContent="Simulation complete. Expiry: "+s.expiry+
+   " candle(s). Stake: 1 unit. Payout return: "+s.payout;
+ }catch(e){$("btInfo").textContent="Backtest error: "+e.message}
 }
 
 /* STRATEGY OPTIMIZER */
-
-function runOptimizer() {
-  try {
-    const data=csvCandles.length ? csvCandles : liveCandles;
-    const values=data.map(c=>c.close);
-
-    if (values.length<300) {
-      throw Error("At least 300 candles required. Upload a larger CSV file.");
-    }
-
-    const split=Math.floor(values.length*0.70);
-    const payout=Number($("payout").value);
-    const candidates=[];
-
-    for (const rsi of [7,10,14]) {
-      for (const fast of [5,7,9]) {
-        for (const slow of [13,21,26]) {
-          if (slow<=fast) continue;
-
-          for (const threshold of [50,67,100]) {
-            for (const expiry of [1,2,3]) {
-              const s={rsi,fast,slow,threshold,expiry,payout};
-
-              const train=evaluateStrategy(values,s,0,split);
-
-              if (train.trades<10 || train.profit<=0) continue;
-
-              candidates.push({s,train});
-            }
-          }
-        }
+function runOptimizer(){
+ try{
+  const data=csvCandles.length?csvCandles:liveCandles;
+  const values=data.map(c=>c.close);
+  if(values.length<300)throw Error("At least 300 candles required. Current data: "+values.length+". Upload a larger CSV file.");
+  const split=Math.floor(values.length*.70),payout=Number($("payout").value);
+  const candidates=[];
+  for(const rsi of [7,10,14]){
+   for(const fast of [5,7,9]){
+    for(const slow of [13,21,26]){
+     if(slow<=fast)continue;
+     for(const threshold of [50,67,100]){
+      for(const expiry of [1,2,3]){
+       const s={rsi,fast,slow,threshold,expiry,payout};
+       const train=evaluateStrategy(values,s,0,split);
+       if(train.trades>=10&&train.profit>0)candidates.push({s,train});
       }
+     }
     }
-
-    if (!candidates.length) {
-      throw Error("No profitable training strategy found. Try more historical candles.");
-    }
-
-    candidates.sort((a,b)=>{
-      const af=Number.isFinite(a.train.factor)?a.train.factor:999;
-      const bf=Number.isFinite(b.train.factor)?b.train.factor:999;
-      return bf-af || b.train.profit-a.train.profit;
-    });
-
-    const best=candidates[0];
-    const test=evaluateStrategy(values,best.s,split,values.length);
-
-    optimizedSettings=best.s;
-
-    show("optRSI",best.s.rsi);
-    show("optEMA",best.s.fast+" / "+best.s.slow);
-    show("optConfidence",best.s.threshold+"%");
-    show("optExpiry",best.s.expiry+" candle(s)");
-    show("optTrainTrades",best.train.trades);
-    show("optTrain",best.train.rate.toFixed(1)+"%");
-    show("optTestTrades",test.trades);
-    show("optTest",test.trades ? test.rate.toFixed(1)+"%" : "Not enough trades");
-    show("optProfit",(test.profit>=0?"+":"")+test.profit.toFixed(2));
-
-    $("optStatus").textContent =
-      "Optimizer completed. Training uses first 70%; testing uses final 30%. "+
-      (test.trades<10
-        ? "Too few test trades for a reliable conclusion."
-        : test.profit>0
-          ? "Testing period shows positive simulated P/L."
-          : "Testing period is not profitable.");
-  } catch(error) {
-    optimizedSettings=null;
-    $("optStatus").textContent="Optimizer error: "+error.message;
+   }
   }
+  if(!candidates.length)throw Error("No profitable training strategy found. Try more historical candles.");
+  candidates.sort((a,b)=>{
+   const af=Number.isFinite(a.train.factor)?a.train.factor:999;
+   const bf=Number.isFinite(b.train.factor)?b.train.factor:999;
+   return bf-af||b.train.profit-a.train.profit;
+  });
+  const best=candidates[0];
+  const test=evaluateStrategy(values,best.s,split,values.length);
+  optimizedSettings=best.s;
+  show("optRSI",best.s.rsi);show("optEMA",best.s.fast+" / "+best.s.slow);
+  show("optConfidence",best.s.threshold+"%");
+  show("optExpiry",best.s.expiry+" candle(s)");
+  show("optTrainTrades",best.train.trades);
+  show("optTrain",best.train.rate.toFixed(1)+"%");
+  show("optTestTrades",test.trades);
+  show("optTest",test.trades?test.rate.toFixed(1)+"%":"Not enough trades");
+  show("optProfit",(test.profit>=0?"+":"")+test.profit.toFixed(2));
+  $("optStatus").textContent="Optimizer completed. Training first 70%; testing final 30%. "+
+   (test.trades<10?"Too few test trades for a reliable conclusion.":
+    test.profit>0?"Positive simulated testing P/L.":"Testing period is not profitable.");
+ }catch(e){optimizedSettings=null;$("optStatus").textContent="Optimizer error: "+e.message}
 }
 
-function applyOptimized() {
-  if (!optimizedSettings) {
-    $("optStatus").textContent="Run the optimizer first.";
-    return;
-  }
-
-  $("rsiPeriod").value=optimizedSettings.rsi;
-  $("emaFast").value=optimizedSettings.fast;
-  $("emaSlow").value=optimizedSettings.slow;
-  $("threshold").value=optimizedSettings.threshold;
-  $("expiry").value=optimizedSettings.expiry;
-  $("payout").value=optimizedSettings.payout;
-
-  $("optStatus").textContent=
-    "Best historical settings applied. Press GET LIVE ANALYSIS to refresh.";
+function applyOptimized(){
+ if(!optimizedSettings){$("optStatus").textContent="Run optimizer first.";return}
+ $("rsiPeriod").value=optimizedSettings.rsi;
+ $("emaFast").value=optimizedSettings.fast;
+ $("emaSlow").value=optimizedSettings.slow;
+ $("threshold").value=optimizedSettings.threshold;
+ $("expiry").value=optimizedSettings.expiry;
+ $("payout").value=optimizedSettings.payout;
+ $("optStatus").textContent="Settings applied. Press GET LIVE ANALYSIS.";
 }
 
 /* PAPER TRADING */
-
-function updatePaper() {
-  show("paperBalance",paper.balance.toFixed(2));
-  show("paperWins",paper.wins);
-  show("paperLosses",paper.losses);
+function updatePaper(){
+ show("paperBalance",paper.balance.toFixed(2));
+ show("paperWins",paper.wins);show("paperLosses",paper.losses);
 }
-
-function openPaper(side) {
-  if (!liveCandles.length) {
-    $("paperStatus").textContent="Load candles first.";
-    return;
-  }
-
-  if (pendingPaper) {
-    $("paperStatus").textContent="A paper trade is already open.";
-    return;
-  }
-
-  const stake=Number($("paperStake").value);
-  const payout=Number($("paperPayout").value);
-
-  if (!Number.isFinite(stake) || stake<=0 ||
-      stake>paper.balance || !Number.isFinite(payout) ||
-      payout<=0 || payout>2) {
-    $("paperStatus").textContent="Enter a valid stake and payout.";
-    return;
-  }
-
-  const last=liveCandles[liveCandles.length-1];
-
-  pendingPaper={
-    side,
-    stake,
-    payout,
-    entry:last.close,
-    time:last.time
-  };
-
-  $("paperStatus").textContent=
-    "Open "+side+" paper trade. Waiting for next candle.";
+function openPaper(side){
+ if(!liveCandles.length){$("paperStatus").textContent="Load candles first.";return}
+ if(pendingPaper){$("paperStatus").textContent="A paper trade is already open.";return}
+ const stake=Number($("paperStake").value),payout=Number($("paperPayout").value);
+ if(!Number.isFinite(stake)||stake<=0||stake>paper.balance||
+ !Number.isFinite(payout)||payout<=0||payout>2){
+  $("paperStatus").textContent="Enter valid stake and payout.";return;
+ }
+ const last=liveCandles.at(-1);
+ pendingPaper={side,stake,payout,entry:last.close,time:last.time};
+ $("paperStatus").textContent="Open "+side+" paper trade. Waiting for next candle.";
 }
-
-function settlePaper() {
-  if (!pendingPaper || !liveCandles.length) return;
-
-  const last=liveCandles[liveCandles.length-1];
-  if (last.time<=pendingPaper.time) return;
-
-  const won=pendingPaper.side==="CALL"
-    ? last.close>pendingPaper.entry
-    : last.close<pendingPaper.entry;
-
-  if (won) {
-    paper.balance+=pendingPaper.stake*pendingPaper.payout;
-    paper.wins++;
-    $("paperStatus").textContent="Paper trade WON.";
-  } else {
-    paper.balance-=pendingPaper.stake;
-    paper.losses++;
-    $("paperStatus").textContent="Paper trade LOST.";
-  }
-
-  pendingPaper=null;
-  updatePaper();
+function settlePaper(){
+ if(!pendingPaper||!liveCandles.length)return;
+ const last=liveCandles.at(-1);
+ if(last.time<=pendingPaper.time)return;
+ const won=pendingPaper.side==="CALL"?last.close>pendingPaper.entry:last.close<pendingPaper.entry;
+ if(won){paper.balance+=pendingPaper.stake*pendingPaper.payout;paper.wins++;$("paperStatus").textContent="Paper trade WON."}
+ else{paper.balance-=pendingPaper.stake;paper.losses++;$("paperStatus").textContent="Paper trade LOST."}
+ pendingPaper=null;updatePaper();
 }
-
-function resetPaper() {
-  if (confirm("Reset virtual balance?")) {
-    paper={balance:1000,wins:0,losses:0};
-    pendingPaper=null;
-    updatePaper();
-    $("paperStatus").textContent="Paper account reset.";
-  }
+function resetPaper(){
+ if(confirm("Reset virtual balance?")){
+  paper={balance:1000,wins:0,losses:0};pendingPaper=null;
+  updatePaper();$("paperStatus").textContent="Paper account reset.";
+ }
 }
 
 /* AUTO UPDATE */
-
-function startAuto() {
-  stopAuto();
-  refreshAll();
-  timer=setInterval(refreshAll,60000);
-  $("status").textContent="Auto update started.";
+function startAuto(){
+ stopAuto();refreshAll();timer=setInterval(refreshAll,60000);
+ $("status").textContent="Auto update started.";
 }
-
-function stopAuto() {
-  if (timer) {
-    clearInterval(timer);
-    timer=null;
-  }
-  $("status").textContent="Auto update stopped.";
+function stopAuto(){
+ if(timer){clearInterval(timer);timer=null}
+ $("status").textContent="Auto update stopped.";
 }
-
-$("symbol").addEventListener("change",()=>{
-  lastHistoryCandle=null;
-  refreshAll();
-});
-
-window.addEventListener("resize",()=>{
-  drawChart("chart",liveCandles);
-});
-
-renderHistory();
-updatePaper();
-startAuto();
-
+$("symbol").addEventListener("change",()=>{lastHistoryCandle=null;refreshAll()});
+window.addEventListener("resize",()=>drawChart("chart",liveCandles));
+renderHistory();updatePaper();startAuto();
 </script>
 </body>
 </html>
